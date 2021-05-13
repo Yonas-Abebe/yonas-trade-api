@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+       <flow name="yonas-trade-api-main">
+        <http:listener config-ref="yonas-trade-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="yonas-trade-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="434b4e43-6998-4fce-b0d0-8aa585248702" name="set-error-response-subflow" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="07739615-c53d-46ff-8d89-5a694972c0fa" name="set-error-response-subflow" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="2c5387be-8d77-4d24-9e29-b4ac3f63de81" name="set-error-response-subflow" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="194584e7-090c-49f9-9188-783bd1843b50" name="set-error-response-subflow" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="eb6be931-03e9-4a68-a1da-22752120cf61" name="set-error-response-subflow" />
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<flow-ref doc:name="set-error-response-subflow" doc:id="2e1eb40e-3424-4703-9608-0c510899dd30" name="set-error-response-subflow" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="yonas-trade-api-console">
+        <http:listener config-ref="yonas-trade-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="yonas-trade-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found!"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\trade\file:application\json:yonas-trade-api-config">
+		<flow-ref doc:name="process-trade-to-file-flow" doc:id="d0bd64ca-b5a8-4d99-9684-2735129dcc0e" name="process-trade-to-file-flow"/>
+    </flow>
+    <flow name="post:\trade\ods:application\json:yonas-trade-api-config">
+		<flow-ref doc:name="process-trades-to-ods-subflow" doc:id="f472c92d-bff3-46e7-9f16-b6694199b38d" name="process-trades-to-ods-subflow"/>
+    </flow>
+</mule>

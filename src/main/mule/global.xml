@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="72796b6a-9969-40eb-8a74-2cbbb8243e55" file="config/local.properties" />
+	<configuration doc:name="Configuration" doc:id="6c95c9a8-ce34-41b2-a33f-e72a299d47be" defaultErrorHandler-ref="global-error-handler" />
+		<db:config name="Database_Config" doc:name="Database Config" doc:id="b93e2c64-1b77-48c9-9d8f-8113765e8519" >
+		<db:mssql-connection host="DESKTOP-2E8OGRF" user="sa" password="Mayo7882*#*" databaseName="MyDatabase" />
+	</db:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="79c3ae11-5cba-4390-b57a-1eb483836d67" />
+	<http:listener-config name="yonas-trade-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8082" />
+    </http:listener-config>
+    <apikit:config name="yonas-trade-api-config" api="resource::28f4cb9d-52ba-48fc-8a6e-5a3419448b78:yonas-trade-api:1.0.1:raml:zip:yonas-trade-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+ 
+	
+	
+	
+	
+	
+	
+	<error-handler name="global-error-handler" doc:id="b3fa08b9-ba4b-4277-b441-4aa9b9b6b34d" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d0d1b252-5f92-4e3d-8c48-ff6c7160af69" >
+			<flow-ref doc:name="set-error-response-subflow" doc:id="627c4fe3-620f-4e70-9775-81deabfd6b18" name="set-error-response-subflow"/>
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="set-error-response-subflow" doc:id="e2770a23-0762-4e67-9c9f-565a37cfbbb6" >
+		<ee:transform doc:name="set error response" doc:id="4c43e19f-c0ea-4236-9464-b42ec2b3cce9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+"status":"failed", 
+"errorType":  error.errorType,
+"errorDescription": error.description
+	
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/json
+---
+(
+if (error.errorType.identifier=="BAD_REQUEST")
+400
+else if (error.errorType.identifier=="NOT_FOUND")
+404
+else if (error.errorType.identifier=="METHOD_NOT_ALLOWED")
+405
+else if (error.errorType.identifier=="NOT_ACCEPTABLE")
+406
+else if (error.errorType.identifier=="UNSUPPORTED_MEDIA_TYPE")
+415
+else if (error.errorType.identifier=="NOT_IMPLEMENTED")
+501
+else
+500
+)
+
+
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+</mule>
