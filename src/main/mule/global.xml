@@ -15,8 +15,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<configuration-properties doc:name="Configuration properties" doc:id="72796b6a-9969-40eb-8a74-2cbbb8243e55" file="config/local.properties" />
 	<configuration doc:name="Configuration" doc:id="6c95c9a8-ce34-41b2-a33f-e72a299d47be" defaultErrorHandler-ref="global-error-handler" />
 		<db:config name="Database_Config" doc:name="Database Config" doc:id="b93e2c64-1b77-48c9-9d8f-8113765e8519" >
-		<db:mssql-connection host="DESKTOP-2E8OGRF" user="sa" password="Mayo7882*#*" databaseName="MyDatabase" />
-	</db:config>
+		<db:mssql-connection host="${db.host}" user="${db.user}" password="${db.password}" databaseName="${db.databaseName}" />
+		</db:config>
 	<file:config name="File_Config" doc:name="File Config" doc:id="79c3ae11-5cba-4390-b57a-1eb483836d67" />
 	<http:listener-config name="yonas-trade-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8082" />
