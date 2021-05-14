@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<flow name="dbFlow" doc:id="f844e584-a182-4dde-81c8-4d2887652091" >
+		<db:insert doc:name="Insert" doc:id="934577c5-48a8-47ed-a7d3-1104a790ea15" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into [dbo].[fx]
+([index], symbol, operation, quantity, price) values
+(:index, :symbol, :operation, :quantity, :price)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	index: "NASDAQ", 
+	symbol: "USDINR",
+	operation: "Sell",
+    quantity: 50,
+    price: 50.00
+    
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="dd4545b4-48a4-4429-9bb6-2155f0cfcbaa" />
+	</flow>
+</mule>

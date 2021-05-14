@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<sub-flow name="process-trade-to-file-flow" doc:id="dfcfeca2-25d1-40ad-bc6b-148b16999afe" >
+		<logger level="INFO" doc:name="Logger" doc:id="9a16a325-afa5-40e5-a9b5-1d29c6b31fec" message='#["request received to process trade file, correlationId: " ++ correlationId]'/>
+		<choice doc:name="Choice" doc:id="c77442ce-42a8-401a-b599-932c726a4312" >
+			<when expression='#[lower(payload."type")=="equity"]'>
+				<logger level="INFO" doc:name="received equity trade" doc:id="299a1902-4350-4e56-a03f-b1d5ac308b45" message='#["request received to process trade, correlationId: " ++ correlationId]'/>
+				<ee:transform doc:name="set filePath" doc:id="7e5a4336-2a33-41b7-98e6-dcc0a918ab70">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="filePath" ><![CDATA[%dw 2.0
+output application/json
+---
+p("equity.filePath") ++ (p("equity.fileName") ++ (now() as String {format:"yyyy_MM_dd_HH_mm_ss"}) ++ ".json")]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="create-file-subflow" doc:id="334519f2-3ed8-457c-b721-ca5ce890e684" name="create-file-subflow"/>
+				<ee:transform doc:name="set response" doc:id="14e9434c-3245-43da-a834-19f54f074206" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+
+"status":"trade processed successfully"
+
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='#[lower(payload."type")=="fx"]'>
+				<logger level="INFO" doc:name="received fx trade" doc:id="c63a3d8f-7e20-477d-aa37-d8e15badaabc" message='#["request received to process trade, correlationId: " ++ correlationId]'/>
+				<flow-ref doc:name="create-file-subflow" doc:id="5b380b76-09b9-4dba-9da3-d31fd6f2bd11" name="create-file-subflow"/>
+				<ee:transform doc:name="Set filePath" doc:id="59e30d32-279d-46a0-b1c7-45b0321688d1">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="filePath"><![CDATA[%dw 2.0
+output application/json
+---
+p("fx.filePath") ++ (p("fx.fileName") ++ (now() as String {format:"yyyy_MM_dd_HH_mm_ss"}) ++ ".json")
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="set response" doc:id="5485bd73-e154-45f1-8987-8cb57cc00fc4" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+
+"status":"trade processed successfully"
+
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="e568a917-cf41-4ab7-a5de-71d8ac0273e9" message='#[%dw 2.0&#10;output application/json&#10;---&#10;"invalid trade type: " ++ payload."type" ++ " correlationId: " ++ correlationId]'/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="create-file-subflow" doc:id="d7803422-98bb-497b-acc1-cfe978c5b54c" >
+		<logger level="INFO" doc:name="create file" doc:id="a4be0642-2cb8-4baa-929c-865a33be33b6" message='#["ready to create a file, correlationId: " ++ correlationId]' />
+		<file:write doc:name="Write" doc:id="f5ca0f35-b347-4306-a027-2b2f51790f4e" path="#[vars.filePath]" config-ref="File_Config" />
+		<logger level="INFO" doc:name="file created" doc:id="7550c90e-1d61-4da1-814e-672beeb8919a" message='#["file created succussfully, correlationId: " ++ correlationId]' />
+	</sub-flow>
+</mule>
